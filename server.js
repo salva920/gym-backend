@@ -9,14 +9,14 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const SECRET_KEY = 'your_secret_key';
+const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 
 // Configuración de la base de datos
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'salva',
-  database: 'gym'
+  host: process.env.DATABASE_HOST,
+  user: process.env.DATABASE_USER,
+  password: process.env.DATABASE_PASSWORD,
+  database: process.env.DATABASE_NAME
 });
 
 db.connect((err) => {
