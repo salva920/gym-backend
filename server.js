@@ -124,6 +124,11 @@ cron.schedule('0 0 * * *', actualizarEstadoClientes, {
 // Ejecutar inmediatamente al iniciar el servidor
 actualizarEstadoClientes();
 
+// Ruta raíz para comprobar que el servidor está en funcionamiento
+app.get('/', (req, res) => {
+  res.send('Servidor funcionando correctamente');
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
