@@ -17,12 +17,13 @@ const db = mysql.createConnection({
   user: process.env.MYSQLUSER,
   password: process.env.MYSQLPASSWORD,
   database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT // Asegúrate de añadir esta línea si tu puerto no es el predeterminado
+  port: process.env.MYSQLPORT
 });
 
 db.connect((err) => {
   if (err) {
-    throw err;
+    console.error('Database connection failed:', err.stack);
+    return;
   }
   console.log('Connected to database');
 });
