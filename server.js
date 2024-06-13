@@ -11,12 +11,13 @@ app.use(bodyParser.json());
 
 const SECRET_KEY = process.env.SECRET_KEY;
 
-// Configuración de la base de datos
+// Configuración de la base de datos utilizando variables de entorno
 const db = mysql.createConnection({
   host: process.env.MYSQLHOST,
-  user: 'root',
-  password: process.env.MYSQL_ROOT_PASSWORD,
-  database: process.env.MYSQLDATABASE
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE,
+  port: process.env.MYSQLPORT // Asegúrate de añadir esta línea si tu puerto no es el predeterminado
 });
 
 db.connect((err) => {
