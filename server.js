@@ -1,32 +1,50 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const mysql = require('mysql2');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const cron = require('node-cron');
+const mongoose = require('mongoose');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+
 const SECRET_KEY = process.env.SECRET_KEY;
+const MONGO_URI = process.env.MONGO_URI;
 
-// Configuración de la base de datos utilizando variables de entorno
-const db = mysql.createConnection({
-  host: process.env.MYSQLHOST,
-  user: process.env.MYSQLUSER,
-  password: process.env.MYSQLPASSWORD,
-  database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT
+
+// Conexión a MongoDB atlas
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => {
+  console.log('Conectado a MongoDB Atlas');
+}).catch((err) => {
+  console.error('Error conectando a MongoDB Atlas:', err);
 });
 
-db.connect((err) => {
-  if (err) {
-    console.error('Database connection failed:', err.stack);
-    return;
-  }
-  console.log('Connected to database');
+// Definición del esquema y modelo del cliente
+const clienteSchema = new mongoose.Schema({
+  nombre: String,
+  cedula: String,
+  telefono: String,
+  correo: String,
+  direccion: String,
+  fecha_nacimiento: Date,
+  sexo: String,
+  peso: String,
+  horario: String,
+  historial_medico: String,
+  tipo_entrenamiento: String,
+  fecha_inicio: Date,
+  tipo_membresia: String,
+  estado_pago: String,
+  fechaRegistro: Date,
+  notas: String
 });
+
+const Cliente = mongoose.model('Cliente', clienteSchema);
 
 // Middleware para verificar el token
 const verifyToken = (req, res, next) => {
@@ -44,7 +62,7 @@ const verifyToken = (req, res, next) => {
 };
 
 // Ruta para login
-app.post('/login', (req, res) => {
+app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   const sql = 'SELECT * FROM users WHERE username = ? AND password = ?';
   db.query(sql, [username, password], (err, result) => {
@@ -59,73 +77,38 @@ app.post('/login', (req, res) => {
 });
 
 // Rutas de la API protegidas
-app.get('/clientes', verifyToken, (req, res) => {
-  let sql = 'SELECT * FROM clientes';
-  db.query(sql, (err, result) => {
+app.get('/api/clientes', verifyToken, (req, res) => {
+  Cliente.find({}, (err, result) => {
     if (err) throw err;
     res.send(result);
   });
 });
 
-app.post('/clientes', verifyToken, (req, res) => {
+app.post('/api/clientes', verifyToken, (req, res) => {
   let newCliente = req.body;
-  let sql = 'INSERT INTO clientes SET ?';
-  db.query(sql, newCliente, (err, result) => {
+  Cliente.create(newCliente, (err, result) => {
     if (err) throw err;
     res.send(result);
   });
 });
 
-app.put('/clientes/:id', verifyToken, (req, res) => {
+app.put('/api/clientes/:id', verifyToken, (req, res) => {
   let updateCliente = req.body;
-  let sql = `UPDATE clientes SET ? WHERE id = ${req.params.id}`;
-  db.query(sql, updateCliente, (err, result) => {
+  Cliente.findByIdAndUpdate(req.params.id, updateCliente, (err, result) => {
     if (err) throw err;
     res.send(result);
   });
 });
 
-app.delete('/clientes/:id', verifyToken, (req, res) => {
-  let sql = `DELETE FROM clientes WHERE id = ${req.params.id}`;
-  db.query(sql, (err, result) => {
+app.delete('/api/clientes/:id', verifyToken, (req, res) => {
+  Cliente.findByIdAndDelete(req.params.id, (err, result) => {
     if (err) throw err;
     res.send(result);
   });
 });
-
-// Función para actualizar el estado de los clientes
-const actualizarEstadoClientes = () => {
-  const hoy = new Date();
-  const sql = 'SELECT id, fechaRegistro, estado_pago FROM clientes';
-  db.query(sql, (err, clientes) => {
-    if (err) throw err;
-
-    clientes.forEach(cliente => {
-      const fechaRegistro = new Date(cliente.fechaRegistro);
-      const diferenciaMeses = (hoy.getFullYear() - fechaRegistro.getFullYear()) * 12 + (hoy.getMonth() - fechaRegistro.getMonth());
-
-      if (diferenciaMeses >= 1 && cliente.estado_pago === 'Pagado') {
-        const updateSql = 'UPDATE clientes SET estado_pago = ? WHERE id = ?';
-        db.query(updateSql, ['Pendiente', cliente.id], (err, result) => {
-          if (err) throw err;
-          console.log(`Cliente con id ${cliente.id} actualizado a Pendiente`);
-        });
-      }
-    });
-  });
-};
-
-// Programar el cron job para que se ejecute todos los días a la medianoche
-cron.schedule('0 0 * * *', actualizarEstadoClientes, {
-  scheduled: true,
-  timezone: 'America/New_York' // Ajusta la zona horaria según sea necesario
-});
-
-// Ejecutar inmediatamente al iniciar el servidor
-actualizarEstadoClientes();
 
 // Ruta raíz para comprobar que el servidor está en funcionamiento
-app.get('/', (req, res) => {
+app.get('/api/', (req, res) => {
   res.send('Servidor funcionando correctamente');
 });
 
