@@ -4,6 +4,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const path = require('path');
+require('dotenv').config();
 
 const app = express();
 app.use(cors());
@@ -50,7 +51,7 @@ const verifyToken = (req, res, next) => {
   if (!token) {
     return res.status(403).send('Token is required');
   }
-  jwt.verify(token, SECRET_KEY, (err, decoded) => {
+  jwt.verify(token.replace('Bearer ', ''), SECRET_KEY, (err, decoded) => {
     if (err) {
       return res.status(500).send('Invalid Token');
     }
@@ -63,14 +64,23 @@ const verifyToken = (req, res, next) => {
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   // Aquí debes cambiar para verificar usuario y contraseña en MongoDB
-  const token = jwt.sign({ id: username }, SECRET_KEY, { expiresIn: '1h' });
-  res.send({ auth: true, token });
+  // Ejemplo simple: const user = await User.findOne({ username, password });
+  // if (!user) { return res.status(401).send('Invalid credentials'); }
+  if (username === 'admin' && password === 'password') { // Simulación de autenticación
+    const token = jwt.sign({ id: username }, SECRET_KEY, { expiresIn: '1h' });
+    return res.send({ auth: true, token });
+  } else {
+    return res.status(401).send('Invalid credentials');
+  }
 });
 
 // Rutas de la API protegidas
 app.get('/api/clientes', verifyToken, (req, res) => {
   Cliente.find({}, (err, result) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error al obtener los clientes:', err);
+      return res.status(500).send('Error al obtener los clientes');
+    }
     res.send(result);
   });
 });
@@ -78,22 +88,31 @@ app.get('/api/clientes', verifyToken, (req, res) => {
 app.post('/api/clientes', verifyToken, (req, res) => {
   let newCliente = req.body;
   Cliente.create(newCliente, (err, result) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error al agregar el cliente:', err);
+      return res.status(500).send('Error al agregar el cliente');
+    }
     res.send(result);
   });
 });
 
 app.put('/api/clientes/:id', verifyToken, (req, res) => {
   let updateCliente = req.body;
-  Cliente.findByIdAndUpdate(req.params.id, updateCliente, (err, result) => {
-    if (err) throw err;
+  Cliente.findByIdAndUpdate(req.params.id, updateCliente, { new: true }, (err, result) => {
+    if (err) {
+      console.error('Error al actualizar el cliente:', err);
+      return res.status(500).send('Error al actualizar el cliente');
+    }
     res.send(result);
   });
 });
 
 app.delete('/api/clientes/:id', verifyToken, (req, res) => {
   Cliente.findByIdAndDelete(req.params.id, (err, result) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error al eliminar el cliente:', err);
+      return res.status(500).send('Error al eliminar el cliente');
+    }
     res.send(result);
   });
 });
