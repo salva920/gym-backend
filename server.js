@@ -2,18 +2,20 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const cron = require('node-cron');
 const mongoose = require('mongoose');
-const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+
 const SECRET_KEY = process.env.SECRET_KEY;
 const MONGO_URI = process.env.MONGO_URI;
 
-// Conexión a MongoDB Atlas
-mongoose.connect(MONGO_URI, {
+
+// Conexión a MongoDB atlas
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 }).then(() => {
@@ -62,9 +64,16 @@ const verifyToken = (req, res, next) => {
 // Ruta para login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-  // Aquí debes cambiar para verificar usuario y contraseña en MongoDB
-  const token = jwt.sign({ id: username }, SECRET_KEY, { expiresIn: '1h' });
-  res.send({ auth: true, token });
+  const sql = 'SELECT * FROM users WHERE username = ? AND password = ?';
+  db.query(sql, [username, password], (err, result) => {
+    if (err) throw err;
+    if (result.length > 0) {
+      const token = jwt.sign({ id: result[0].id }, SECRET_KEY, { expiresIn: '1h' });
+      res.send({ auth: true, token });
+    } else {
+      res.send({ auth: false, token: null });
+    }
+  });
 });
 
 // Rutas de la API protegidas
@@ -98,11 +107,9 @@ app.delete('/api/clientes/:id', verifyToken, (req, res) => {
   });
 });
 
-// Sirve el frontend de React
-app.use(express.static(path.join(__dirname, 'build')));
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+// Ruta raíz para comprobar que el servidor está en funcionamiento
+app.get('/api/', (req, res) => {
+  res.send('Servidor funcionando correctamente');
 });
 
 const PORT = process.env.PORT || 5000;
