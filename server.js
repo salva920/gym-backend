@@ -117,17 +117,23 @@ app.put('/api/clientes/:id', verifyToken, (req, res) => {
 
 app.delete('/api/clientes/:id', verifyToken, (req, res) => {
   const clienteId = req.params.id;
+  console.log(`Intentando eliminar cliente con ID: ${clienteId}`);
   Cliente.findByIdAndDelete(clienteId, (err, result) => {
     if (err) {
       console.error('Error al eliminar el cliente:', err);
       return res.status(500).send('Error al eliminar el cliente');
     }
     if (!result) {
+      console.log(`Cliente con ID: ${clienteId} no encontrado`);
       return res.status(404).send('Cliente no encontrado');
     }
+    console.log(`Cliente con ID: ${clienteId} eliminado exitosamente`);
     res.send({ message: 'Cliente eliminado exitosamente' });
   });
 });
+
+
+
 
 
 // Sirve el frontend de React
