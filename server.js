@@ -63,14 +63,21 @@ const verifyToken = (req, res, next) => {
 // Ruta para login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-  // Aquí debes cambiar para verificar usuario y contraseña en MongoDB
-  // Ejemplo simple: const user = await User.findOne({ username, password });
-  // if (!user) { return res.status(401).send('Invalid credentials'); }
   if (username === 'admin' && password === 'password') { // Simulación de autenticación
     const token = jwt.sign({ id: username }, SECRET_KEY, { expiresIn: '1h' });
     return res.send({ auth: true, token });
   } else {
     return res.status(401).send('Invalid credentials');
+  }
+});
+
+app.get('/api/test-db-connection', async (req, res) => {
+  try {
+    await mongoose.connection.db.command({ ping: 1 });
+    res.status(200).send('Pinged your deployment. You successfully connected to MongoDB!');
+  } catch (err) {
+    console.error('Error conectando a MongoDB:', err);
+    res.status(500).send('Error conectando a MongoDB');
   }
 });
 
