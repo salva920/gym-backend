@@ -81,6 +81,20 @@ app.get('/api/test-db-connection', async (req, res) => {
   }
 });
 
+// Función para formatear fechas al formato ISO (yyyy-MM-dd)
+const formatDate = (date) => {
+  if (!date) return null;
+  const d = new Date(date);
+  let month = '' + (d.getMonth() + 1);
+  let day = '' + d.getDate();
+  const year = d.getFullYear();
+
+  if (month.length < 2) month = '0' + month;
+  if (day.length < 2) day = '0' + day;
+
+  return [year, month, day].join('-');
+};
+
 // Rutas de la API protegidas
 app.get('/api/clientes', verifyToken, (req, res) => {
   Cliente.find({}, (err, result) => {
@@ -94,6 +108,10 @@ app.get('/api/clientes', verifyToken, (req, res) => {
 
 app.post('/api/clientes', verifyToken, (req, res) => {
   let newCliente = req.body;
+  newCliente.fecha_nacimiento = formatDate(newCliente.fecha_nacimiento);
+  newCliente.fecha_inicio = formatDate(newCliente.fecha_inicio);
+  newCliente.fechaRegistro = formatDate(newCliente.fechaRegistro);
+
   Cliente.create(newCliente, (err, result) => {
     if (err) {
       console.error('Error al agregar el cliente:', err);
@@ -105,15 +123,21 @@ app.post('/api/clientes', verifyToken, (req, res) => {
 
 app.put('/api/clientes/:id', verifyToken, (req, res) => {
   let updateCliente = req.body;
+  updateCliente.fecha_nacimiento = formatDate(updateCliente.fecha_nacimiento);
+  updateCliente.fecha_inicio = formatDate(updateCliente.fecha_inicio);
+  updateCliente.fechaRegistro = formatDate(updateCliente.fechaRegistro);
+
   Cliente.findByIdAndUpdate(req.params.id, updateCliente, { new: true }, (err, result) => {
     if (err) {
       console.error('Error al actualizar el cliente:', err);
       return res.status(500).send('Error al actualizar el cliente');
     }
+    if (!result) {
+      return res.status(404).send('Cliente no encontrado');
+    }
     res.send(result);
   });
 });
-
 
 app.delete('/api/clientes/:id', verifyToken, (req, res) => {
   const clienteId = req.params.id;
@@ -131,10 +155,6 @@ app.delete('/api/clientes/:id', verifyToken, (req, res) => {
     res.send({ message: 'Cliente eliminado exitosamente' });
   });
 });
-
-
-
-
 
 // Sirve el frontend de React
 app.use(express.static(path.join(__dirname, '..', 'build')));
