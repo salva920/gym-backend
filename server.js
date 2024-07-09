@@ -139,6 +139,21 @@ app.put('/api/clientes/:id', verifyToken, (req, res) => {
   });
 });
 
+// Ruta para marcar como solvente
+app.put('/api/clientes/solventar/:id', verifyToken, (req, res) => {
+  const clienteId = req.params.id;
+  Cliente.findByIdAndUpdate(clienteId, { estado_pago: 'Solvente' }, { new: true }, (err, result) => {
+    if (err) {
+      console.error('Error al marcar como solvente:', err);
+      return res.status(500).send('Error al marcar como solvente');
+    }
+    if (!result) {
+      return res.status(404).send('Cliente no encontrado');
+    }
+    res.send(result);
+  });
+});
+
 app.delete('/api/clientes/:id', verifyToken, (req, res) => {
   const clienteId = req.params.id;
   console.log(`Intentando eliminar cliente con ID: ${clienteId}`);
