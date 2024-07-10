@@ -53,6 +53,7 @@ const verifyToken = (req, res, next) => {
   }
   jwt.verify(token.replace('Bearer ', ''), SECRET_KEY, (err, decoded) => {
     if (err) {
+      console.error("Error decodificando el token:", err);
       return res.status(500).send('Invalid Token');
     }
     req.userId = decoded.id;
