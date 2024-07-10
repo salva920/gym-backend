@@ -1,7 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config();
@@ -10,7 +9,6 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const SECRET_KEY = process.env.SECRET_KEY;
 const MONGO_URI = process.env.MONGO_URI;
 
 // Conexión a MongoDB Atlas
@@ -45,28 +43,16 @@ const clienteSchema = new mongoose.Schema({
 
 const Cliente = mongoose.model('Cliente', clienteSchema);
 
-// Middleware para verificar el token
-const verifyToken = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) {
-    return res.status(403).send('Token is required');
-  }
-  jwt.verify(token.replace('Bearer ', ''), SECRET_KEY, (err, decoded) => {
-    if (err) {
-      console.error("Error decodificando el token:", err);
-      return res.status(500).send('Invalid Token');
-    }
-    req.userId = decoded.id;
-    next();
-  });
+// Middleware para permitir todas las solicitudes
+const allowAll = (req, res, next) => {
+  next();
 };
 
 // Ruta para login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   if (username === 'admin' && password === 'password') { // Simulación de autenticación
-    const token = jwt.sign({ id: username }, SECRET_KEY, { expiresIn: '1h' });
-    return res.send({ auth: true, token });
+    return res.send({ auth: true, token: 'fake-token' });
   } else {
     return res.status(401).send('Invalid credentials');
   }
@@ -97,7 +83,7 @@ const formatDate = (date) => {
 };
 
 // Rutas de la API protegidas
-app.get('/api/clientes', verifyToken, (req, res) => {
+app.get('/api/clientes', allowAll, (req, res) => {
   Cliente.find({}, (err, result) => {
     if (err) {
       console.error('Error al obtener los clientes:', err);
@@ -107,7 +93,7 @@ app.get('/api/clientes', verifyToken, (req, res) => {
   });
 });
 
-app.post('/api/clientes', verifyToken, (req, res) => {
+app.post('/api/clientes', allowAll, (req, res) => {
   let newCliente = req.body;
   newCliente.fecha_nacimiento = formatDate(newCliente.fecha_nacimiento);
   newCliente.fecha_inicio = formatDate(newCliente.fecha_inicio);
@@ -122,7 +108,7 @@ app.post('/api/clientes', verifyToken, (req, res) => {
   });
 });
 
-app.put('/api/clientes/:id', verifyToken, (req, res) => {
+app.put('/api/clientes/:id', allowAll, (req, res) => {
   let updateCliente = req.body;
   updateCliente.fecha_nacimiento = formatDate(updateCliente.fecha_nacimiento);
   updateCliente.fecha_inicio = formatDate(updateCliente.fecha_inicio);
@@ -141,7 +127,7 @@ app.put('/api/clientes/:id', verifyToken, (req, res) => {
 });
 
 // Ruta para marcar como solvente
-app.put('/api/clientes/solventar/:id', verifyToken, (req, res) => {
+app.put('/api/clientes/solventar/:id', allowAll, (req, res) => {
   const clienteId = req.params.id;
   Cliente.findByIdAndUpdate(clienteId, { estado_pago: 'Solvente' }, { new: true }, (err, result) => {
     if (err) {
@@ -155,7 +141,7 @@ app.put('/api/clientes/solventar/:id', verifyToken, (req, res) => {
   });
 });
 
-app.delete('/api/clientes/:id', verifyToken, (req, res) => {
+app.delete('/api/clientes/:id', allowAll, (req, res) => {
   const clienteId = req.params.id;
   console.log(`Intentando eliminar cliente con ID: ${clienteId}`);
   Cliente.findByIdAndDelete(clienteId, (err, result) => {
