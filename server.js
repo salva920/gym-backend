@@ -6,7 +6,7 @@ const path = require('path');
 require('dotenv').config();
 
 const { actualizarEstadoClientes } = require('./cronjobs'); // Importa el cron job
-const Cliente = require('./models/clientes'); // Importa el modelo de Cliente
+const Cliente = require('./models/cliente'); // Importa el modelo de Cliente
 
 const app = express();
 app.use(cors());
@@ -81,6 +81,7 @@ app.post('/api/clientes', allowAll, (req, res) => {
   newCliente.fecha_nacimiento = formatDate(newCliente.fecha_nacimiento);
   newCliente.fecha_inicio = formatDate(newCliente.fecha_inicio);
   newCliente.fechaRegistro = formatDate(newCliente.fechaRegistro);
+  newCliente.estado_pago = 'solvente'; // Aseguramos que el nuevo cliente se guarda como solvente
 
   Cliente.create(newCliente, (err, result) => {
     if (err) {
