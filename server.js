@@ -81,7 +81,7 @@ app.post('/api/clientes', allowAll, (req, res) => {
   newCliente.fecha_nacimiento = formatDate(newCliente.fecha_nacimiento);
   newCliente.fecha_inicio = formatDate(newCliente.fecha_inicio);
   newCliente.fechaRegistro = formatDate(newCliente.fechaRegistro);
-  newCliente.estado_pago = 'solvente'; // Aseguramos que el nuevo cliente se guarda como solvente
+  newCliente.estado_pago = 'Solvente'; // Aseguramos que el nuevo cliente se guarda como solvente
 
   Cliente.create(newCliente, (err, result) => {
     if (err) {
