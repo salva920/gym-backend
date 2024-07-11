@@ -5,6 +5,9 @@ const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config();
 
+const { actualizarEstadoClientes } = require('./cronjob'); // Importa el cron job
+
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
