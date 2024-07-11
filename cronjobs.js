@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const Cliente = require('./models/cliente');
+const Cliente = require('./models/clientes');
 
 // Función para actualizar el estado de pago de los clientes
 const actualizarEstadoClientes = async () => {

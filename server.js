@@ -6,7 +6,7 @@ const path = require('path');
 require('dotenv').config();
 
 const { actualizarEstadoClientes } = require('./cronjobs'); // Importa el cron job
-const Cliente = require('./models/cliente'); // Importa el modelo de Cliente
+const Cliente = require('./models/clientes'); // Importa el modelo de Cliente
 
 const app = express();
 app.use(cors());
