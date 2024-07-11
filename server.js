@@ -7,7 +7,6 @@ require('dotenv').config();
 
 const { actualizarEstadoClientes } = require('./cronjob'); // Importa el cron job
 
-
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -20,6 +19,7 @@ mongoose.connect(MONGO_URI, {
   useUnifiedTopology: true,
 }).then(() => {
   console.log('Conectado a MongoDB Atlas');
+  actualizarEstadoClientes(); // Ejecuta la función de actualización de estados al iniciar
 }).catch((err) => {
   console.error('Error conectando a MongoDB Atlas:', err);
 });
