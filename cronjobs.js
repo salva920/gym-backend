@@ -1,37 +1,5 @@
 const cron = require('node-cron');
-const mongoose = require('mongoose');
-
-// Configuración de la conexión a la base de datos
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log('Conectado a MongoDB Atlas');
-}).catch((err) => {
-  console.error('Error conectando a MongoDB Atlas:', err);
-});
-
-// Definir el esquema y modelo del cliente
-const clienteSchema = new mongoose.Schema({
-  nombre: String,
-  cedula: String,
-  telefono: String,
-  correo: String,
-  direccion: String,
-  fecha_nacimiento: Date,
-  sexo: String,
-  peso: String,
-  horario: String,
-  historial_medico: String,
-  tipo_entrenamiento: String,
-  fecha_inicio: Date,
-  tipo_membresia: String,
-  estado_pago: String,
-  fechaRegistro: Date,
-  notas: String
-});
-
-const Cliente = mongoose.model('Cliente', clienteSchema);
+const Cliente = require('./models/cliente');
 
 // Función para actualizar el estado de pago de los clientes
 const actualizarEstadoClientes = async () => {
