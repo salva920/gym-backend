@@ -5,15 +5,17 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
 const { actualizarEstadoClientes } = require('./cronjobs'); // Importa el cron job
+const Cliente = require('./models/cliente'); // Importa el modelo de cliente
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+mongoose.set('strictQuery', false); // Añade esto para suprimir la advertencia de mongoose
+
 const MONGO_URI = process.env.MONGO_URI;
 
-// Conexión a MongoDB Atlas
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -24,43 +26,13 @@ mongoose.connect(MONGO_URI, {
   console.error('Error conectando a MongoDB Atlas:', err);
 });
 
-// Middleware para permitir todas las solicitudes y actualizar estados de pago
-app.use(async (req, res, next) => {
-  await actualizarEstadoClientes();
-  next();
-});
-
-// Definición del esquema y modelo del cliente
-const clienteSchema = new mongoose.Schema({
-  nombre: String,
-  cedula: String,
-  telefono: String,
-  correo: String,
-  direccion: String,
-  fecha_nacimiento: Date,
-  sexo: String,
-  peso: String,
-  horario: String,
-  historial_medico: String,
-  tipo_entrenamiento: String,
-  fecha_inicio: Date,
-  tipo_membresia: String,
-  estado_pago: String,
-  fechaRegistro: Date,
-  notas: String
-});
-
-const Cliente = mongoose.model('Cliente', clienteSchema);
-
-// Middleware para permitir todas las solicitudes
 const allowAll = (req, res, next) => {
   next();
 };
 
-// Ruta para login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-  if (username === 'admin' && password === 'password') { // Simulación de autenticación
+  if (username === 'admin' && password === 'password') {
     return res.send({ auth: true, token: 'fake-token' });
   } else {
     return res.status(401).send('Invalid credentials');
@@ -77,7 +49,6 @@ app.get('/api/test-db-connection', async (req, res) => {
   }
 });
 
-// Función para formatear fechas al formato ISO (yyyy-MM-dd)
 const formatDate = (date) => {
   if (!date) return null;
   const d = new Date(date);
@@ -91,7 +62,6 @@ const formatDate = (date) => {
   return [year, month, day].join('-');
 };
 
-// Rutas de la API protegidas
 app.get('/api/clientes', allowAll, (req, res) => {
   Cliente.find({}, (err, result) => {
     if (err) {
@@ -135,7 +105,6 @@ app.put('/api/clientes/:id', allowAll, (req, res) => {
   });
 });
 
-// Ruta para marcar como solvente
 app.put('/api/clientes/solventar/:id', allowAll, (req, res) => {
   const clienteId = req.params.id;
   Cliente.findByIdAndUpdate(clienteId, { estado_pago: 'Solvente' }, { new: true }, (err, result) => {
@@ -167,7 +136,6 @@ app.delete('/api/clientes/:id', allowAll, (req, res) => {
   });
 });
 
-// Sirve el frontend de React
 app.use(express.static(path.join(__dirname, '..', 'build')));
 
 app.get('*', (req, res) => {
