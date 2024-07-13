@@ -34,7 +34,7 @@ const allowAll = (req, res, next) => {
 // Ruta para login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-  if (username === 'admin' && password === 'password') { // Simulación de autenticación
+  if (username === 'Richani' && password === 'musculo') { // Simulación de autenticación
     return res.send({ auth: true, token: 'fake-token' });
   } else {
     return res.status(401).send('Invalid credentials');
