@@ -1,21 +1,21 @@
-// server.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
-const { actualizarEstadoClientes } = require('./cronjobs'); // Importa el cron job
-const Cliente = require('./models/cliente'); // Importa el modelo de cliente
 require('dotenv').config();
+
+const { actualizarEstadoClientes } = require('./cronjobs'); // Importa el cron job
+const Cliente = require('./models/clientes'); // Importa el modelo de Cliente
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-mongoose.set('strictQuery', false); // Añade esto para suprimir la advertencia de mongoose
-
 const MONGO_URI = process.env.MONGO_URI;
 
+// Configuración de la conexión a la base de datos
+mongoose.set('strictQuery', false); // Para evitar la advertencia de Mongoose
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -26,13 +26,15 @@ mongoose.connect(MONGO_URI, {
   console.error('Error conectando a MongoDB Atlas:', err);
 });
 
+// Middleware para permitir todas las solicitudes
 const allowAll = (req, res, next) => {
   next();
 };
 
+// Ruta para login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-  if (username === 'admin' && password === 'password') {
+  if (username === 'admin' && password === 'password') { // Simulación de autenticación
     return res.send({ auth: true, token: 'fake-token' });
   } else {
     return res.status(401).send('Invalid credentials');
@@ -49,6 +51,7 @@ app.get('/api/test-db-connection', async (req, res) => {
   }
 });
 
+// Función para formatear fechas al formato ISO (yyyy-MM-dd)
 const formatDate = (date) => {
   if (!date) return null;
   const d = new Date(date);
@@ -62,6 +65,7 @@ const formatDate = (date) => {
   return [year, month, day].join('-');
 };
 
+// Rutas de la API protegidas
 app.get('/api/clientes', allowAll, (req, res) => {
   Cliente.find({}, (err, result) => {
     if (err) {
@@ -77,6 +81,7 @@ app.post('/api/clientes', allowAll, (req, res) => {
   newCliente.fecha_nacimiento = formatDate(newCliente.fecha_nacimiento);
   newCliente.fecha_inicio = formatDate(newCliente.fecha_inicio);
   newCliente.fechaRegistro = formatDate(newCliente.fechaRegistro);
+  newCliente.estado_pago = 'Solvente'; // Aseguramos que el nuevo cliente se guarda como solvente
 
   Cliente.create(newCliente, (err, result) => {
     if (err) {
@@ -105,6 +110,7 @@ app.put('/api/clientes/:id', allowAll, (req, res) => {
   });
 });
 
+// Ruta para marcar como solvente
 app.put('/api/clientes/solventar/:id', allowAll, (req, res) => {
   const clienteId = req.params.id;
   Cliente.findByIdAndUpdate(clienteId, { estado_pago: 'Solvente' }, { new: true }, (err, result) => {
@@ -136,6 +142,7 @@ app.delete('/api/clientes/:id', allowAll, (req, res) => {
   });
 });
 
+// Sirve el frontend de React
 app.use(express.static(path.join(__dirname, '..', 'build')));
 
 app.get('*', (req, res) => {
