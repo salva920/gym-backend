@@ -1,12 +1,11 @@
+// server.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
-require('dotenv').config();
-
 const { actualizarEstadoClientes } = require('./cronjobs'); // Importa el cron job
-const Cliente = require('./models/clientes'); // Importa el modelo de Cliente
+require('dotenv').config();
 
 const app = express();
 app.use(cors());
@@ -14,8 +13,7 @@ app.use(bodyParser.json());
 
 const MONGO_URI = process.env.MONGO_URI;
 
-// Configuración de la conexión a la base de datos
-mongoose.set('strictQuery', false); // Para evitar la advertencia de Mongoose
+// Conexión a MongoDB Atlas
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -25,6 +23,34 @@ mongoose.connect(MONGO_URI, {
 }).catch((err) => {
   console.error('Error conectando a MongoDB Atlas:', err);
 });
+
+// Middleware para permitir todas las solicitudes y actualizar estados de pago
+app.use(async (req, res, next) => {
+  await actualizarEstadoClientes();
+  next();
+});
+
+// Definición del esquema y modelo del cliente
+const clienteSchema = new mongoose.Schema({
+  nombre: String,
+  cedula: String,
+  telefono: String,
+  correo: String,
+  direccion: String,
+  fecha_nacimiento: Date,
+  sexo: String,
+  peso: String,
+  horario: String,
+  historial_medico: String,
+  tipo_entrenamiento: String,
+  fecha_inicio: Date,
+  tipo_membresia: String,
+  estado_pago: String,
+  fechaRegistro: Date,
+  notas: String
+});
+
+const Cliente = mongoose.model('Cliente', clienteSchema);
 
 // Middleware para permitir todas las solicitudes
 const allowAll = (req, res, next) => {
@@ -81,7 +107,6 @@ app.post('/api/clientes', allowAll, (req, res) => {
   newCliente.fecha_nacimiento = formatDate(newCliente.fecha_nacimiento);
   newCliente.fecha_inicio = formatDate(newCliente.fecha_inicio);
   newCliente.fechaRegistro = formatDate(newCliente.fechaRegistro);
-  newCliente.estado_pago = 'Solvente'; // Aseguramos que el nuevo cliente se guarda como solvente
 
   Cliente.create(newCliente, (err, result) => {
     if (err) {

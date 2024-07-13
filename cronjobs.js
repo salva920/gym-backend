@@ -1,7 +1,7 @@
+// cronjobs.js
 const cron = require('node-cron');
 const Cliente = require('./models/clientes');
 
-// Función para actualizar el estado de pago de los clientes
 const actualizarEstadoClientes = async () => {
   try {
     const clientes = await Cliente.find({});
